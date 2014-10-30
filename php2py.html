@@ -1,0 +1,299 @@
+<!DOCTYPE html><html>
+<head>
+<meta charset="UTF-8">
+<title>summary.md</title>
+</head>
+<style>
+/* https://highlightjs.org */
+@import url("/js/highlight/styles/default.css");
+@import url("/js/highlight/styles/tomorrow-night-blue.css");
+html {
+	font-size: 10pt;
+  font-family: Verdana, sans-serif;
+  width: 700px;
+}
+
+pre { border: #eee; background: #f7f7f7; padding: 0.5em; font-family: monospace;}
+</style>
+<script src="/js/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<p><em>Giang Manh ~ Oct 2014</em></p>
+
+<h1>Switch from PHP to Python programming: a summary</h1>
+
+<p>Assume you're familiar with PHP and want to explore Python, this document discusses about PHP code and their equivalence code in Python</p>
+
+<p>The purpose is to give a sense of how a migration of Python programming language.</p>
+
+<p>The chosen version for demontration code is 5.3+ for PHP and 3.4+ for Python. There are differences with other versions, but the main dicussion focuses on language / framework philosophy.</p>
+
+<p>Without speicial notes, all sample code are written in pair. First is PHP version and the second is Python version.</p>
+
+<h2>Open tag</h2>
+
+<pre><code class="php">&lt;h1&gt;Hello world&lt;/h1&gt;
+From: &lt;?php echo gethostname(); ?&gt;
+&lt;/p&gt;
+</code></pre>
+
+<pre><code class="python">#!/usr/bin/env python
+import socket
+print(
+    "Content-Type: text/html\n\n",
+    "&lt;h1&gt;Hello world&lt;/h1&gt;",
+    socket.gethostname()
+)
+</code></pre>
+
+<p>These are supposed to be run using php-cgi and python using CGI behind a webserver.</p>
+
+<p>PHP is itself a template script orginally used to embed server-side logic in HTML. Open tag is used to separated PHP code from others.</p>
+
+<p>Python is a genaral-purpose language. To serve for web devlopement, we must understand HTTP protocol to produce a page. In production, Python run itself as a webserver.</p>
+
+<h2>Configuration</h2>
+
+<p>There is nothing like php.ini in Python to configure runtime.</p>
+
+<p>However, for development we should notice two files:</p>
+
+<ul>
+<li>~/.pythonrc for interactive session.</li>
+<li>~/.pdbrc for built-in debugger.</li>
+</ul>
+
+<h2>Library and extension</h2>
+
+<p>Library in PHP are pure PHP code, often installed via Composer or drop in.
+Extension in PHP are compiled and configured in php.ini
+Isolating extensions with specific version per project is not possible.</p>
+
+<p>Library in Python has both form (pure and compiled), managed via easy_install or newer "pip" package manager. Python can have many different set of libraries with specific version separated per project via virtualenv.</p>
+
+<h2>Array</h2>
+
+<pre><code class="php">$places = array('Tokyo', 'Nagoya', 'Osaka');
+printf("Total: %d\n", count($places));
+places[] = 'Yokohama';
+for ($i = 0; $i &lt; count($places); $i++) {
+    printf("%d %s\n", $i + 1, $places[$i]);
+}
+echo implode(' -&gt; ', $places);
+</code></pre>
+
+<pre><code class="python">places = ['Tokyo', 'Nagoya', 'Osaka']
+print("Total: %d" % len(places))
+places.append('Yokohama')
+for i, place in enumerate(places, 1):
+    print("{} {}".format(i, place))
+print(' -&gt; '.join(places));
+</code></pre>
+
+<p>There is two ways of representing array in Python. 
+First is "tuple", immutable array using parenthesis ( ) to denote. It's memory-efficient, therefore we cannot add or remove items in places.
+Sencond is "list", mutable array using [ ] to denote. Support various operation as we expected in OOP style, sure. Everything's fully OOP. And ' -> ' in Python is a string object!</p>
+
+<h2>Map</h2>
+
+<pre><code class="php">$classified = array(
+    'good' =&gt; 30,
+    'average' =&gt; 50,
+    'bad' =&gt; 20,
+);
+echo isset($classified['total']) ? $classified['total'] : 0;
+foreach ($classified as $type =&gt; $n) {
+    echo "$type : $n\n";
+}
+</code></pre>
+
+<pre><code class="python">classified = {
+    'good': 30,
+    'average': 50,
+    'bad': 20,
+}
+print(classified.get('total', 0))
+for type, n in classified.items():
+    print(type + ' : ' + n)
+</code></pre>
+
+<p>PHP has array and associated array and we're unable to distinguish them.
+Python has its own thing called dictionary. dict has very important role in Python and we will gradually explore it.</p>
+
+<p>One important characteristic is list comprehension.</p>
+
+<p>See PHP:</p>
+
+<pre><code class="php">$squares = array();
+foreach (range(0, 10) as $i) {
+    $squares[] = $i*$i;
+}
+</code></pre>
+
+<p>And Python way (It's more powerful than a shorcut):</p>
+
+<pre><code class="python">squares = [i**2 for i in range(10)]
+</code></pre>
+
+<p>There are many good built-in classes available in "collections". Refer the Python manual for more information.</p>
+
+<h2>Error handling</h2>
+
+<p>PHP uses configuration to control notice, warn, error, ... for internal error. 
+No way to catch these, specially "fatal error". It may works but it's silent about what's wrong.</p>
+
+<p>Python uses exception for everything, even interally. It's more strict. If you don't catch, programm stops.</p>
+
+<p>The below is another story: custom exception.</p>
+
+<pre><code class="php">try {
+    # ...
+    throw new Exception('Oops!');
+    # ...
+} catch (Exeption $e) {
+    echo $e-&gt;getMessage();
+}
+</code></pre>
+
+<pre><code class="python">try:
+    # ...
+    raise Exeption('Oops!')
+    # ...
+# Possible to multicatch, catch with out instance
+# except ValueError:
+except Exception as e:
+    print(e.args)
+</code></pre>
+
+<h2>Module</h2>
+
+<p>PHP includes everything into global.
+In constrast, each Python file is a isolated namespace.</p>
+
+<pre><code class="php">include 'module.php';
+</code></pre>
+
+<pre><code class="python">import module
+</code></pre>
+
+<p>PHP use include_path configuration, while Python looks for modules in following order:</p>
+
+<ul>
+<li>builtin module</li>
+<li>Current script folder (eg. "module.py"). Therefore don't name your file alike any well-known libraries.</li>
+<li>PYTHONPATH environtment variable</li>
+<li>sys.prefix + "lib/pythonX.Y/site-packages"</li>
+</ul>
+
+<h2>Logic</h2>
+
+<p>PHP uses C-likes yntax logic operators.</p>
+
+<p>Python use natural words</p>
+
+<pre><code class="php">$x = 0
+if (true || false || ! $x) {
+    print("OK")
+}
+</code></pre>
+
+<pre><code class="python">if True or False:
+    print("OK")
+</code></pre>
+
+<h2>Inspect</h2>
+
+<pre><code class="php">$today = new Date();
+echo get_class($today);
+print_r(get_class_methods($today))
+$dynamic_class = 'Date';
+$today = new $dynamic_class();
+</code></pre>
+
+<pre><code class="python">import datetime
+
+today = datetime.date.today()
+print(type(today)) # alternative: today.__class__
+print(dir(today))
+dynamic_class = 'datetime.date'
+today = type(dynamic_class, (object,), {})
+</code></pre>
+
+<p>Python is fully OOP, that's why we have syntax like today.<strong>class</strong></p>
+
+<h2>Context managment</h2>
+
+<pre><code class="php">$f = fopen('test.txt', 'w');
+if ($f) {
+    fwrite($f, 'Test');
+    fclose($f);
+}
+</code></pre>
+
+<pre><code class="python">with open('test.txt', 'w') as f:
+    f.write('Test');
+</code></pre>
+
+<p>"with" statement is dedicated in Python to manager resource, via the object <strong>enter</strong>() and <strong>exit</strong>() function. In PHP, you have to manage it manually.</p>
+
+<h2>Constants</h2>
+
+<p>Python don't have constants, use var for it but in cheefully way:</p>
+
+<pre><code class="php">const FOO = 0
+const BAR = 1
+const BAZ = 2
+</code></pre>
+
+<pre><code class="python">FOO, BAR, BAZ = range(3)
+# Bonus:
+# class Colors(object):
+#    RED, GREEN, BLUE, YELLOW = (255,0,0), (0,255,0), (0,0,255), (0,255,255)
+</code></pre>
+
+<h2>Philosophy</h2>
+
+<p>PHP is born as quick, does the job using average design language for web development.</p>
+
+<p>Python is different, it's an art of programming:</p>
+
+<pre><code class="no-highlight">&gt;&gt;&gt; import this
+The Zen of Python, by Tim Peters
+
+Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+Complex is better than complicated.
+Flat is better than nested.
+Sparse is better than dense.
+Readability counts.
+Special cases aren't special enough to break the rules.
+Although practicality beats purity.
+Errors should never pass silently.
+Unless explicitly silenced.
+In the face of ambiguity, refuse the temptation to guess.
+There should be one-- and preferably only one --obvious way to do it.
+Although that way may not be obvious at first unless you're Dutch.
+Now is better than never.
+Although never is often better than *right* now.
+If the implementation is hard to explain, it's a bad idea.
+If the implementation is easy to explain, it may be a good idea.
+Namespaces are one honking great idea -- let's do more of those!
+</code></pre>
+
+<p>Read this for a demonstration:
+<a href="http://artifex.org/~hblanks/talks/2011/pep20_by_example.html">http://artifex.org/~hblanks/talks/2011/pep20_by_example.html</a></p>
+
+<h2>Switch from PHP: Unique features of Python</h2>
+
+<p>More readings:</p>
+
+<p><a href="http://stackoverflow.com/questions/739654/how-can-i-make-a-chain-of-function-decorators-in-python/1594484#1594484">Decorators</a></p>
+
+<p><a href="http://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python/231855#231855">Iterator and yeild</a></p>
+
+<p><a href="http://stackoverflow.com/questions/101268/hidden-features-of-python?page=4&amp;tab=votes#tab-top">Code techniques</a></p>
+
+<p><a href="https://docs.python.org/3.4/library/collections.html#collections.namedtuple">namedtuple</a></p>
+
+<p><a href="https://docs.python.org/3.4/library/collections.html#collections.defaultdict">defaultdict</a></p>
+</html>
